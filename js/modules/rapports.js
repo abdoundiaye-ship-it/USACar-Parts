@@ -7,6 +7,8 @@ const Rapports = (() => {
 
   let _tab = 'ventes';
 
+  let _currentData = null;
+
   /* ── Shared filter state per tab ── */
   const _f = {
     ventes:  { dateFrom: '', dateTo: '', clientId: '',       categorie: '' },
@@ -199,7 +201,7 @@ const Rapports = (() => {
         </div>
       </div>`;
 
-    Rapports._currentData = { title: 'Rapport Ventes', rows: filteredV, cols: [
+    _currentData = { title: 'Rapport Ventes', rows: filteredV, cols: [
       {key:'id',label:'N° Vente'},{key:'date',label:'Date'},{key:'client_id',label:'Client'},
       {key:'total_ht',label:'Total HT'},{key:'tva',label:'TVA'},{key:'total_ttc',label:'Total TTC'},{key:'statut',label:'Statut'}
     ]};
@@ -277,7 +279,7 @@ const Rapports = (() => {
         </div>
       </div>`;
 
-    Rapports._currentData = { title: 'Rapport Achats', rows: filteredA, cols: [
+    _currentData = { title: 'Rapport Achats', rows: filteredA, cols: [
       {key:'id',label:'N° Achat'},{key:'date',label:'Date'},{key:'fournisseur_id',label:'Fournisseur'},
       {key:'total',label:'Marchandise USD'},{key:'autres_frais',label:'Frais USD'},{key:'statut',label:'Statut'}
     ]};
@@ -353,7 +355,7 @@ const Rapports = (() => {
         </div>
       </div>`;
 
-    Rapports._currentData = { title: 'Rapport Stock', rows: filtered.map(s => ({
+    _currentData = { title: 'Rapport Stock', rows: filtered.map(s => ({
       sku: s.produit.sku, nom: s.produit.nom, categorie: s.produit.categorie,
       entree: s.entree, sortie: s.sortie, actuel: s.actuel, valeur: s.valeur,
     })), cols: [
@@ -464,7 +466,7 @@ const Rapports = (() => {
         </div>
       </div>`;
 
-    Rapports._currentData = { title: 'Rapport Marges', rows: lines, cols: [
+    _currentData = { title: 'Rapport Marges', rows: lines, cols: [
       {key:'sku',label:'SKU'},{key:'nom',label:'Produit'},{key:'cat',label:'Catégorie'},
       {key:'qte',label:'Qté Vendue'},{key:'caHT',label:'CA HT'},{key:'cout',label:'Coût/U'},
       {key:'coutTot',label:'Coût Total'},{key:'marge',label:'Marge Brute'},{key:'tauxMarge',label:'Taux Marge'}
@@ -537,7 +539,7 @@ const Rapports = (() => {
         </div>
       </div>`;
 
-    Rapports._currentData = { title: 'Rapport Clients', rows: filtered, cols: [
+    _currentData = { title: 'Rapport Clients', rows: filtered, cols: [
       {key:'id',label:'ID'},{key:'nom',label:'Nom'},{key:'telephone',label:'Téléphone'},
       {key:'email',label:'Email'},{key:'total_achats',label:'CA TTC'},{key:'credit',label:'Crédit Dû'}
     ]};
@@ -590,13 +592,11 @@ const Rapports = (() => {
      EXPORT CSV
   ═══════════════════════════════════════════════════════════ */
   function _exportCurrent() {
-    const d = Rapports._currentData;
+    const d = _currentData;
     if (!d || !d.rows || !d.rows.length) { toast('Aucune donnée à exporter', 'warning'); return; }
     const tabLabels = { ventes:'ventes', achats:'achats', stock:'stock', marges:'marges', clients:'clients' };
     exportCSV(`rapport_${tabLabels[_tab]}_${todayStr()}.csv`, d.cols, d.rows);
   }
-
-  Rapports._currentData = null;
 
   return {
     render,
