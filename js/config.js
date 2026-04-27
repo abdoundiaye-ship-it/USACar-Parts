@@ -4,5 +4,5 @@
    Dashboard → Settings → API
    ============================================================ */
 
-const SUPABASE_URL     = 'https://VOTRE_PROJECT_ID.supabase.co';
-const SUPABASE_ANON_KEY = 'VOTRE_ANON_KEY_ICI';
+const SUPABASE_URL      = 'https://ohvvzrsonbjgkrzuyvou.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9odnZ6cnNvbmJqZ2tyenV5dm91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMDEyOTMsImV4cCI6MjA5Mjg3NzI5M30.5t0YXDZMKwOuPKoqemm3nEaLoBdLg9agxKwMEaDV-V8';
