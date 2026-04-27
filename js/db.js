@@ -3,7 +3,7 @@
    ============================================= */
 
 const DB_NAME = 'usapartsauto_erp';
-const DB_VERSION = 1;
+const DB_VERSION = 2;  /* v2: ajout du store utilisateurs */
 
 const STORES = {
   produits:      { keyPath: 'id', indexes: [{ name: 'sku', unique: true }, { name: 'categorie', unique: false }] },
@@ -19,6 +19,7 @@ const STORES = {
   price_list:    { keyPath: 'produit_id', indexes: [] },
   parametres:    { keyPath: 'cle', indexes: [] },
   logs:          { keyPath: 'id', indexes: [{ name: 'date', unique: false }] },
+  utilisateurs:  { keyPath: 'id', indexes: [{ name: 'username', unique: true }] },
 };
 
 class Database {
