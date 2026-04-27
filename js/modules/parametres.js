@@ -62,6 +62,18 @@ const Parametres = (() => {
           </div>
         </div>
       </div>
+      <div class="card mt-16" style="border-left:4px solid var(--primary-light)">
+        <div class="card-title mb-16">📥 Import Données Workbook Excel</div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">
+          Importe toutes les données du fichier <strong>USA_PARTS_AUTO_pro_stock_erp.xlsx</strong> :
+          23 produits, 2 achats, 28 lignes d'achat, 1 vente, 9 lignes de vente, 1 facture, 41 mouvements de stock, liste des prix complète.
+          <strong style="color:var(--danger)">Attention : efface toutes les données existantes.</strong>
+        </p>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="Parametres.runWorkbookImport()">⬆️ Importer les données du Workbook</button>
+        </div>
+        <div id="importLog" style="display:none;margin-top:16px;background:var(--primary-dark);border-radius:8px;padding:14px;font-family:monospace;font-size:12px;color:#a8d8a8;max-height:220px;overflow-y:auto;line-height:1.8"></div>
+      </div>
       <div class="card mt-16" style="border-left:4px solid var(--danger)">
         <div class="card-title mb-16" style="color:var(--danger)">Zone Dangereuse</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap">
@@ -70,6 +82,38 @@ const Parametres = (() => {
           <button class="btn btn-danger" onclick="Parametres.resetDB()">🗑️ Réinitialiser toutes les données</button>
         </div>
       </div>`;
+  }
+
+  async function runWorkbookImport() {
+    if (typeof importWorkbookData !== 'function') {
+      toast('Fichier data-import.js introuvable', 'error'); return;
+    }
+    const log = el('importLog');
+    if (!log) return;
+    log.style.display = 'block';
+    log.innerHTML = '';
+
+    const append = (msg) => {
+      log.innerHTML += msg + '<br>';
+      log.scrollTop = log.scrollHeight;
+    };
+
+    try {
+      const result = await importWorkbookData(append);
+      append('');
+      append('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      append(`📦 Produits       : ${result.produits}`);
+      append(`🔄 Mouvements     : ${result.mouvements}`);
+      append(`🛒 Ventes         : ${result.ventes} (${result.lignes_ventes} lignes)`);
+      append(`📦 Achats         : ${result.achats} (${result.lignes_achats} lignes)`);
+      append(`💰 Liste des Prix : ${result.price_list}`);
+      append('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      append('🎉 Redirection vers le tableau de bord dans 2s…');
+      setTimeout(() => { window.location.hash = '#dashboard'; navigate('#dashboard'); }, 2000);
+    } catch (err) {
+      append(`❌ ERREUR : ${err.message}`);
+      toast('Erreur lors de l\'import', 'error');
+    }
   }
 
   async function saveAll() {
