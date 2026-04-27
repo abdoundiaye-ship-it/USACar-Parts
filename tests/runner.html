@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>USA PARTS AUTO — Test Suite</title>
+  <style>
+    :root {
+      --pass: #16a34a; --fail: #dc2626;
+      --pass-bg: #dcfce7; --fail-bg: #fee2e2;
+      --border: #e2e8f0; --text: #1e293b; --muted: #64748b;
+      --bg: #f8fafc; --surface: #fff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+    header {
+      background: #1a3a5c; color: #fff; padding: 20px 32px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    header h1 { font-size: 18px; font-weight: 700; }
+    header p  { font-size: 13px; opacity: 0.7; }
+
+    .controls { padding: 16px 32px; display: flex; gap: 12px; align-items: center; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .btn { padding: 8px 20px; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: #2563a8; color: #fff; }
+    .btn-primary:hover { background: #1a3a5c; }
+    .btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--muted); }
+    .btn-ghost:hover { background: var(--bg); }
+
+    #status { font-size: 13px; color: var(--muted); margin-left: auto; }
+
+    main { padding: 24px 32px; max-width: 900px; }
+
+    .summary {
+      display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+      border-radius: 10px; margin-bottom: 24px; font-size: 15px; font-weight: 700;
+    }
+    .summary.all-pass { background: var(--pass-bg); color: var(--pass); }
+    .summary.has-fail  { background: var(--fail-bg); color: var(--fail); }
+    .summary-icon { font-size: 24px; }
+    .fail-count { background: var(--fail); color: #fff; padding: 2px 10px; border-radius: 20px; font-size: 12px; }
+
+    .suite { margin-bottom: 16px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .suite-header {
+      padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+      font-size: 14px; cursor: pointer; user-select: none;
+    }
+    .suite-pass { background: #f0fdf4; }
+    .suite-fail { background: #fff1f2; }
+    .suite-count { font-size: 12px; color: var(--muted); background: var(--bg); padding: 2px 8px; border-radius: 20px; }
+
+    .test-list { list-style: none; border-top: 1px solid var(--border); }
+    .test-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 9px 16px; font-size: 13px; border-bottom: 1px solid var(--border);
+    }
+    .test-item:last-child { border-bottom: none; }
+    .test-item.pass { background: #fff; }
+    .test-item.fail { background: #fff8f8; }
+    .test-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .test-item.pass .test-icon { color: var(--pass); }
+    .test-item.fail .test-icon { color: var(--fail); }
+    .test-name { flex: 1; }
+    .test-msg { font-size: 12px; color: var(--fail); background: #fee2e2; padding: 3px 8px; border-radius: 4px; margin-left: 8px; font-family: monospace; }
+
+    .loading { padding: 40px; text-align: center; color: var(--muted); font-size: 15px; }
+    .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: #2563a8; border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>🧪 USA PARTS AUTO — Suite de Tests</h1>
+      <p>Tests unitaires et d'intégration pour l'ERP</p>
+    </div>
+  </header>
+
+  <div class="controls">
+    <button class="btn btn-primary" id="runBtn" onclick="runAllTests()">▶ Lancer tous les tests</button>
+    <button class="btn btn-ghost" onclick="location.reload()">↺ Réinitialiser</button>
+    <span id="status">Prêt — cliquez sur "Lancer tous les tests"</span>
+  </div>
+
+  <main>
+    <div id="results" class="loading">
+      <div style="color:#1a3a5c;font-size:16px;">Cliquez sur <strong>▶ Lancer tous les tests</strong> pour démarrer.</div>
+    </div>
+  </main>
+
+  <!-- Load app dependencies first -->
+  <script src="../js/db.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/modules/stocks.js"></script>
+  <script src="../js/modules/produits.js"></script>
+  <script src="../js/modules/ventes.js"></script>
+  <script src="../js/modules/achats.js"></script>
+  <script src="../js/modules/clients.js"></script>
+  <script src="../js/modules/fournisseurs.js"></script>
+  <script src="../js/modules/factures.js"></script>
+  <script src="../js/modules/paiements.js"></script>
+  <script src="../js/modules/pricelist.js"></script>
+  <script src="../js/modules/parametres.js"></script>
+  <script src="../js/modules/dashboard.js"></script>
+
+  <!-- Test framework -->
+  <script src="framework.js"></script>
+
+  <!-- Test suites -->
+  <script src="utils.test.js"></script>
+  <script src="db.test.js"></script>
+  <script src="stocks.test.js"></script>
+  <script src="ventes.test.js"></script>
+  <script src="achats.test.js"></script>
+
+  <script>
+    // Boot DB before running tests
+    async function runAllTests() {
+      const btn = document.getElementById('runBtn');
+      const status = document.getElementById('status');
+      const results = document.getElementById('results');
+
+      btn.disabled = true;
+      btn.textContent = '⏳ En cours…';
+      status.textContent = 'Ouverture de la base de données…';
+
+      results.innerHTML = `<div class="loading"><div class="spinner"></div><div>Exécution des tests…</div></div>`;
+
+      try {
+        await DB.open();
+        status.textContent = 'Base de données ouverte. Exécution des tests…';
+
+        // Re-register all test suites (they were registered at parse time before DB was open)
+        TEST.reset();
+
+        // Re-execute all test files by re-importing as text and eval (workaround for no ES modules)
+        const testFiles = [
+          '../tests/utils.test.js',
+          '../tests/db.test.js',
+          '../tests/stocks.test.js',
+          '../tests/ventes.test.js',
+          '../tests/achats.test.js',
+        ];
+
+        for (const file of testFiles) {
+          try {
+            const resp = await fetch(file);
+            const code = await resp.text();
+            await eval('(async () => { ' + code + ' })()');
+          } catch(e) {
+            console.error('Error loading test file', file, e);
+          }
+        }
+
+        // Small delay to let async tests complete registration
+        await new Promise(r => setTimeout(r, 200));
+
+        TEST.render('results');
+
+        const p = TEST.passed, f = TEST.failed;
+        status.textContent = `${p + f} tests exécutés — ${p} réussis, ${f} échoué(s)`;
+        btn.textContent = '▶ Relancer';
+        btn.disabled = false;
+
+      } catch (e) {
+        results.innerHTML = `<div style="color:#dc2626;padding:20px"><strong>Erreur:</strong> ${e.message}</div>`;
+        btn.textContent = '▶ Lancer tous les tests';
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
