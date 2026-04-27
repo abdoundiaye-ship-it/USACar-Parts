@@ -24,6 +24,8 @@ const PAGES = {
 async function navigate(hash) {
   if (!Auth.isLoggedIn()) { Auth.showLoginScreen(); return; }
 
+  _applyNavVisibility();   /* always refresh sidebar on every navigation */
+
   const page = (hash || '').replace('#', '') || 'dashboard';
   const cfg  = PAGES[page];
   if (!cfg) return navigate('dashboard');
