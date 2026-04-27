@@ -833,6 +833,22 @@ select.form-control { cursor: pointer; }
 /* ── Readonly indicator ── */
 .readonly-badge { pointer-events: none; }
 
+/* ── Utilisateurs — profil card selector ── */
+.profil-card {
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+.profil-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.profil-card:active { transform: none; }
+
+/* ── Utilisateurs — opacity for inactive rows ── */
+tr.opacity-50 td { opacity: 0.45; }
+
+/* ── Permissions matrix alternating rows ── */
+.permission-table tbody tr:nth-child(even) { background: var(--surface2); }
+.permission-table tbody tr:hover { background: #eff6ff; }
+
 @media (max-width: 600px) {
   .login-card { border-radius: 14px; }
   .login-form { padding: 22px 20px 18px; }
