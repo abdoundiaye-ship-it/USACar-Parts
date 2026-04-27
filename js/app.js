@@ -14,6 +14,7 @@ const PAGES = {
   achats:       { title: 'Achats',                    render: (c) => Achats.render(c) },
   fournisseurs: { title: 'Fournisseurs',              render: (c) => Fournisseurs.render(c) },
   pricelist:    { title: 'Liste des Prix',            render: (c) => PriceList.render(c) },
+  rapports:     { title: 'Rapports',                  render: (c) => Rapports.render(c) },
   parametres:   { title: 'Paramètres',                render: (c) => Parametres.render(c) },
   logs:         { title: 'Journal d\'Activité',       render: (c) => Logs.render(c) },
 };

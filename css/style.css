@@ -643,13 +643,62 @@ select.form-control { cursor: pointer; }
   color: var(--primary);
 }
 
+/* ---- RAPPORT PRINT STYLES (screen) ---- */
+.rapport-print-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
 /* ---- PRINT STYLES ---- */
 @media print {
-  .sidebar, .topbar, .modal-overlay, .toast-container { display: none !important; }
-  .layout { margin-left: 0; }
+  @page {
+    size: A4;
+    margin: 14mm 18mm 14mm 18mm;
+  }
+
+  /* Hide all chrome */
+  .sidebar, .topbar, .modal-overlay, .toast-container,
+  .page-header-actions, .tabs, .btn, button,
+  input, select, .search-bar { display: none !important; }
+
+  /* Show only print area */
+  .layout, .main-content { display: none !important; }
   .print-only { display: block !important; }
-  .main-content { padding: 0; }
-  body { background: #fff; }
+  body { background: #fff; font-size: 11pt; color: #000; }
+
+  /* Reset facture preview for print */
+  .facture-preview {
+    padding: 0;
+    max-width: 100%;
+    font-size: 10pt;
+  }
+  .facture-header { page-break-inside: avoid; }
+  .facture-table  { width: 100%; font-size: 10pt; }
+  .facture-table th { background: #1a3a5c !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .facture-totals { page-break-inside: avoid; }
+
+  /* Rapport print */
+  .rapport-print { font-size: 10pt; }
+  .rapport-print .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 12px; }
+  .rapport-print .kpi-card { border: 1px solid #dde3ed; padding: 8px 12px; border-radius: 6px; page-break-inside: avoid; }
+  .rapport-print .kpi-card::before { display: none; }
+  .rapport-print .kpi-value { font-size: 14pt; }
+  .rapport-print table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  .rapport-print thead th { background: #1a3a5c !important; color: #fff !important; padding: 6px 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rapport-print tbody td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
+  .rapport-print tfoot td { padding: 6px 8px; background: #f8fafc; font-weight: 700; }
+  .rapport-print .card { border: 1px solid #dde3ed; box-shadow: none; margin-bottom: 10px; }
+  .rapport-print .table-container { overflow: visible; }
+  .rapport-print .badge { border: 1px solid currentColor; }
+  .rapport-print .btn, .rapport-print button, .rapport-print input, .rapport-print select { display: none !important; }
+  .rapport-print .form-group { display: none !important; }
+
+  /* Page break helpers */
+  .page-break-before { page-break-before: always; }
+  .no-break          { page-break-inside: avoid; }
+}
 }
 
 .print-only { display: none; }
