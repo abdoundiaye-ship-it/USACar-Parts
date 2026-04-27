@@ -1,131 +1,143 @@
-/* =============================================
-   USA PARTS AUTO ERP – IndexedDB Layer
-   ============================================= */
+/* ============================================================
+   USA PARTS AUTO ERP — Couche de données Supabase
+   Remplace IndexedDB par PostgreSQL via l'API Supabase.
+   Interface identique à l'ancienne version IndexedDB —
+   tous les modules (ventes.js, stocks.js, etc.) fonctionnent
+   sans aucune modification.
+   ============================================================ */
 
-const DB_NAME = 'usapartsauto_erp';
-const DB_VERSION = 2;  /* v2: ajout du store utilisateurs */
-
-const STORES = {
-  produits:      { keyPath: 'id', indexes: [{ name: 'sku', unique: true }, { name: 'categorie', unique: false }] },
-  mouvements:    { keyPath: 'id', indexes: [{ name: 'produit_id', unique: false }, { name: 'date', unique: false }] },
-  ventes:        { keyPath: 'id', indexes: [{ name: 'client_id', unique: false }, { name: 'date', unique: false }] },
-  lignes_ventes: { keyPath: 'id', indexes: [{ name: 'vente_id', unique: false }, { name: 'produit_id', unique: false }] },
-  factures:      { keyPath: 'id', indexes: [{ name: 'vente_id', unique: false }, { name: 'client_id', unique: false }] },
-  clients:       { keyPath: 'id', indexes: [{ name: 'nom', unique: false }] },
-  fournisseurs:  { keyPath: 'id', indexes: [{ name: 'nom', unique: false }] },
-  achats:        { keyPath: 'id', indexes: [{ name: 'fournisseur_id', unique: false }, { name: 'date', unique: false }] },
-  lignes_achats: { keyPath: 'id', indexes: [{ name: 'achat_id', unique: false }, { name: 'produit_id', unique: false }] },
-  paiements:     { keyPath: 'id', indexes: [{ name: 'reference', unique: false }, { name: 'date', unique: false }] },
-  price_list:    { keyPath: 'produit_id', indexes: [] },
-  parametres:    { keyPath: 'cle', indexes: [] },
-  logs:          { keyPath: 'id', indexes: [{ name: 'date', unique: false }] },
-  utilisateurs:  { keyPath: 'id', indexes: [{ name: 'username', unique: true }] },
+/* ── Colonnes clé primaire par table (hors 'id' standard) ── */
+const PK = {
+  price_list:  'produit_id',
+  parametres:  'cle',
 };
+
+function _pk(store) {
+  return PK[store] || 'id';
+}
+
+/* ── Fallback : noms de colonnes d'index pour getByIndex ── */
 
 class Database {
   constructor() {
-    this.db = null;
+    this.client = null;
+    this._ready = false;
   }
 
+  /* ── Initialisation ── */
   open() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = (e) => {
-        const db = e.target.result;
-        for (const [name, cfg] of Object.entries(STORES)) {
-          if (!db.objectStoreNames.contains(name)) {
-            const store = db.createObjectStore(name, { keyPath: cfg.keyPath });
-            for (const idx of cfg.indexes) {
-              store.createIndex(idx.name, idx.name, { unique: idx.unique });
-            }
-          }
-        }
-      };
-      req.onsuccess = (e) => { this.db = e.target.result; resolve(this); };
-      req.onerror = (e) => reject(e.target.error);
-    });
+    if (
+      typeof SUPABASE_URL === 'undefined' ||
+      SUPABASE_URL.includes('VOTRE_PROJECT_ID') ||
+      typeof SUPABASE_ANON_KEY === 'undefined' ||
+      SUPABASE_ANON_KEY.includes('VOTRE_ANON_KEY')
+    ) {
+      return Promise.reject(new Error(
+        'Supabase non configuré.\n' +
+        'Éditez js/config.js et renseignez SUPABASE_URL et SUPABASE_ANON_KEY.\n' +
+        'Consultez SETUP.md pour les instructions détaillées.'
+      ));
+    }
+
+    try {
+      this.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      this._ready = true;
+      return Promise.resolve(this);
+    } catch (e) {
+      return Promise.reject(new Error('Impossible de créer le client Supabase : ' + e.message));
+    }
   }
 
-  _store(name, mode = 'readonly') {
-    return this.db.transaction(name, mode).objectStore(name);
+  _check() {
+    if (!this._ready || !this.client) throw new Error('Base de données non initialisée. Appelez DB.open() d\'abord.');
   }
 
-  getAll(store) {
-    return new Promise((resolve, reject) => {
-      const req = this._store(store).getAll();
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+  /* ── READ ALL ── */
+  async getAll(store) {
+    this._check();
+    const { data, error } = await this.client.from(store).select('*');
+    if (error) throw new Error(`getAll(${store}): ${error.message}`);
+    return data || [];
   }
 
-  get(store, key) {
-    return new Promise((resolve, reject) => {
-      const req = this._store(store).get(key);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+  /* ── READ ONE ── */
+  async get(store, key) {
+    this._check();
+    const pk = _pk(store);
+    const { data, error } = await this.client
+      .from(store).select('*').eq(pk, key).maybeSingle();
+    if (error) throw new Error(`get(${store}, ${key}): ${error.message}`);
+    return data ?? undefined;
   }
 
-  getByIndex(store, indexName, value) {
-    return new Promise((resolve, reject) => {
-      const req = this._store(store).index(indexName).getAll(value);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+  /* ── READ BY INDEX (colonne secondaire) ── */
+  async getByIndex(store, colName, value) {
+    this._check();
+    const { data, error } = await this.client
+      .from(store).select('*').eq(colName, value);
+    if (error) throw new Error(`getByIndex(${store}, ${colName}): ${error.message}`);
+    return data || [];
   }
 
-  put(store, obj) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(store, 'readwrite');
-      const req = tx.objectStore(store).put(obj);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+  /* ── UPSERT (insert ou update) ── */
+  async put(store, obj) {
+    this._check();
+    const pk = _pk(store);
+    const { error } = await this.client
+      .from(store).upsert(obj, { onConflict: pk });
+    if (error) throw new Error(`put(${store}): ${error.message}`);
+    return obj[pk];
   }
 
-  add(store, obj) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(store, 'readwrite');
-      const req = tx.objectStore(store).add(obj);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+  /* ── INSERT STRICT (échoue si doublon) ── */
+  async add(store, obj) {
+    this._check();
+    const pk = _pk(store);
+    const { error } = await this.client.from(store).insert(obj);
+    if (error) throw new Error(`add(${store}): ${error.message}`);
+    return obj[pk];
   }
 
-  delete(store, key) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(store, 'readwrite');
-      const req = tx.objectStore(store).delete(key);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
+  /* ── DELETE ONE ── */
+  async delete(store, key) {
+    this._check();
+    const pk = _pk(store);
+    const { error } = await this.client.from(store).delete().eq(pk, key);
+    if (error) throw new Error(`delete(${store}, ${key}): ${error.message}`);
   }
 
-  putMany(store, items) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(store, 'readwrite');
-      const os = tx.objectStore(store);
-      items.forEach(item => os.put(item));
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
+  /* ── UPSERT MANY ── */
+  async putMany(store, items) {
+    this._check();
+    if (!items || items.length === 0) return;
+    const pk = _pk(store);
+    /* Découper en lots de 500 pour éviter les limites de l'API */
+    const BATCH = 500;
+    for (let i = 0; i < items.length; i += BATCH) {
+      const batch = items.slice(i, i + BATCH);
+      const { error } = await this.client
+        .from(store).upsert(batch, { onConflict: pk });
+      if (error) throw new Error(`putMany(${store}) batch ${i}: ${error.message}`);
+    }
   }
 
-  clear(store) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(store, 'readwrite');
-      const req = tx.objectStore(store).clear();
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
+  /* ── DELETE ALL (vider une table) ── */
+  async clear(store) {
+    this._check();
+    const pk = _pk(store);
+    /* "NOT pk IS NULL" correspond à toutes les lignes (PK jamais null) */
+    const { error } = await this.client
+      .from(store).delete().not(pk, 'is', null);
+    if (error) throw new Error(`clear(${store}): ${error.message}`);
   }
 
-  count(store) {
-    return new Promise((resolve, reject) => {
-      const req = this._store(store).count();
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+  /* ── COUNT ── */
+  async count(store) {
+    this._check();
+    const { count, error } = await this.client
+      .from(store).select('*', { count: 'exact', head: true });
+    if (error) throw new Error(`count(${store}): ${error.message}`);
+    return count ?? 0;
   }
 }
 
