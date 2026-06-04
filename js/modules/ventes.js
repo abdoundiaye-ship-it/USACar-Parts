@@ -277,18 +277,6 @@ const Ventes = (() => {
       const l = lignesData[i];
       const lid = genId('VL');
       await DB.add('lignes_ventes', { id: lid, vente_id, ...l });
-
-      // Stock sortie automatique si statut Livrée
-      if (statut === 'Livrée') {
-        const allMvs = await DB.getAll('mouvements');
-        const mvId = seqId('MV', allMvs);
-        await DB.add('mouvements', {
-          id: mvId, date, produit_id: l.produit_id,
-          type: 'Sortie', quantite: l.quantite,
-          prix_unitaire: l.prix_applique_ht,
-          reference: vente_id, commentaire: `Vente ${vente_id}`,
-        });
-      }
     }
 
     // Create/update facture

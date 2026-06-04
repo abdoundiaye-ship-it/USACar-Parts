@@ -248,17 +248,6 @@ const Achats = (() => {
       const l = lignesData[i];
       const lid = genId('AL');
       await DB.add('lignes_achats', { id: lid, achat_id, ...l });
-
-      if (statut === 'Reçu') {
-        const allMvs = await DB.getAll('mouvements');
-        await DB.add('mouvements', {
-          id: seqId('MV', allMvs),
-          date, produit_id: l.produit_id,
-          type: 'Entrée', quantite: l.quantite,
-          prix_unitaire: l.cout_revient_unitaire,
-          reference: achat_id, commentaire: `Achat ${achat_id}`,
-        });
-      }
     }
 
     await logAction(existingId ? 'Modification' : 'Création', `Achat ${achat_id} – Total: ${fmtUSD(total + autres_frais)}`);
@@ -272,17 +261,6 @@ const Achats = (() => {
     confirmDialog(`Marquer l'achat <b>${id}</b> comme Reçu et mettre à jour le stock ?`, async () => {
       const achat = _achats.find(a => a.id === id);
       if (!achat) return;
-      const lignes = _lignes.filter(l => l.achat_id === id);
-      for (const l of lignes) {
-        const allMvs = await DB.getAll('mouvements');
-        await DB.add('mouvements', {
-          id: seqId('MV', allMvs),
-          date: achat.date, produit_id: l.produit_id,
-          type: 'Entrée', quantite: l.quantite,
-          prix_unitaire: l.cout_revient_unitaire || l.prix_unitaire,
-          reference: id, commentaire: `Réception ${id}`,
-        });
-      }
       await DB.put('achats', { ...achat, statut: 'Reçu' });
       await logAction('Réception', `Achat ${id} marqué comme Reçu`);
       toast('Achat réceptionné – stock mis à jour', 'success');

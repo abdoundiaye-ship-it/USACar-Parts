@@ -8,10 +8,59 @@ const Stocks = (() => {
   let _query = '';
 
   async function load() {
-    [_mouvements, _produits] = await Promise.all([
+    const [achats, lignesAchats, ventes, lignesVentes, manualMvs, prods] = await Promise.all([
+      DB.getAll('achats'),
+      DB.getAll('lignes_achats'),
+      DB.getAll('ventes'),
+      DB.getAll('lignes_ventes'),
       DB.getAll('mouvements'),
       DB.getAll('produits'),
     ]);
+
+    _produits = prods;
+
+    const achatIds = new Set(achats.map(a => a.id));
+    const venteIds = new Set(ventes.map(v => v.id));
+    const computed = [];
+
+    // Entrées depuis Achats réceptionnés
+    for (const a of achats.filter(a => a.statut === 'Reçu')) {
+      for (const l of lignesAchats.filter(l => l.achat_id === a.id)) {
+        computed.push({
+          id: `${a.id}_${l.produit_id}`,
+          date: a.date,
+          produit_id: l.produit_id,
+          type: 'Entrée',
+          quantite: l.quantite,
+          prix_unitaire: l.cout_revient_unitaire || l.prix_unitaire,
+          reference: a.id,
+          commentaire: `Achat ${a.id}`,
+        });
+      }
+    }
+
+    // Sorties depuis Ventes livrées
+    for (const v of ventes.filter(v => v.statut === 'Livrée')) {
+      for (const l of lignesVentes.filter(l => l.vente_id === v.id)) {
+        computed.push({
+          id: `${v.id}_${l.produit_id}`,
+          date: v.date,
+          produit_id: l.produit_id,
+          type: 'Sortie',
+          quantite: l.quantite,
+          prix_unitaire: l.prix_applique_ht,
+          reference: v.id,
+          commentaire: `Vente ${v.id}`,
+        });
+      }
+    }
+
+    // Ajustements manuels uniquement (non liés à un achat ou une vente)
+    for (const m of manualMvs.filter(m => !achatIds.has(m.reference) && !venteIds.has(m.reference))) {
+      computed.push(m);
+    }
+
+    _mouvements = computed;
   }
 
   /* Compute stock per product from mouvements */
