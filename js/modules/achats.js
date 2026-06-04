@@ -237,6 +237,8 @@ const Achats = (() => {
     if (existingId) {
       const oldL = _lignes.filter(l => l.achat_id === existingId);
       for (const l of oldL) await DB.delete('lignes_achats', l.id);
+      const allMvs = await DB.getAll('mouvements');
+      for (const m of allMvs.filter(m => m.reference === existingId)) await DB.delete('mouvements', m.id);
     }
 
     await DB.put('achats', { id: achat_id, date, fournisseur_id, total, autres_frais, statut });

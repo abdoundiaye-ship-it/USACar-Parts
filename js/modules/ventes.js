@@ -262,10 +262,12 @@ const Ventes = (() => {
     const allVentes = await DB.getAll('ventes');
     const vente_id = existingId || seqId('V', allVentes);
 
-    // Delete old lignes if editing
+    // Delete old lignes and mouvements if editing
     if (existingId) {
       const oldLignes = _lignes.filter(l => l.vente_id === existingId);
       for (const l of oldLignes) await DB.delete('lignes_ventes', l.id);
+      const allMvs = await DB.getAll('mouvements');
+      for (const m of allMvs.filter(m => m.reference === existingId)) await DB.delete('mouvements', m.id);
     }
 
     await DB.put('ventes', { id: vente_id, date, client_id, total_ht, tva, total_ttc, paiement, statut });

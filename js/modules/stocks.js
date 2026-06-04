@@ -66,7 +66,7 @@ const Stocks = (() => {
           return `<span class="badge ${cls}">${r.actuel}</span>`;
         }
       },
-      { key: 'valeur', label: 'Valeur Stock', align: 'right', render: r => r.actuel > 0 ? fmtUSD(r.valeur) : '<span class="text-muted">—</span>' },
+      { key: 'valeur', label: 'Valeur Stock', align: 'right', render: r => r.actuel > 0 ? fmtCurrency(r.valeur) : '<span class="text-muted">—</span>' },
       {
         key: '_actions', label: 'Actions',
         render: r => `<div class="table-actions">
@@ -96,7 +96,7 @@ const Stocks = (() => {
         <div class="kpi-card orange">
           <div class="kpi-icon">💰</div>
           <div class="kpi-label">Valeur du Stock</div>
-          <div class="kpi-value" style="font-size:18px">${fmtUSD(totalValeur)}</div>
+          <div class="kpi-value" style="font-size:18px">${fmtCurrency(totalValeur)}</div>
         </div>
       </div>
       <div class="card">
@@ -118,7 +118,7 @@ const Stocks = (() => {
       { key: 'produit', label: 'Produit', render: r => prodMap[r.produit_id]?.nom || r.produit_id },
       { key: 'type', label: 'Type', render: r => statusBadge(r.type), align: 'center' },
       { key: 'quantite', label: 'Qté', align: 'center' },
-      { key: 'prix_unitaire', label: 'P.U.', align: 'right', render: r => r.prix_unitaire ? fmtUSD(r.prix_unitaire) : '—' },
+      { key: 'prix_unitaire', label: 'P.U.', align: 'right', render: r => r.prix_unitaire ? fmtCurrency(r.prix_unitaire) : '—' },
       { key: 'reference', label: 'Référence' },
       { key: 'commentaire', label: 'Commentaire', render: r => `<span class="text-muted">${r.commentaire || ''}</span>` },
       {
@@ -172,7 +172,7 @@ const Stocks = (() => {
           <input type="number" class="form-control" id="mvQte" min="1" value="1" />
         </div>
         <div class="form-group">
-          <label class="form-label">Prix Unitaire (USD)</label>
+          <label class="form-label">Prix Unitaire (FCFA)</label>
           <input type="number" class="form-control" id="mvPrix" step="0.01" min="0" placeholder="0.00" />
         </div>
         <div class="form-group">

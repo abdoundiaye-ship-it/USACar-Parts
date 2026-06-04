@@ -104,7 +104,7 @@ const Dashboard = (() => {
         <div class="kpi-card orange">
           <div class="kpi-icon">📦</div>
           <div class="kpi-label">Valeur du Stock</div>
-          <div class="kpi-value" style="font-size:20px">${fmtUSD(totalValeurStock)}</div>
+          <div class="kpi-value" style="font-size:20px">${fmtCurrency(totalValeurStock)}</div>
           <div class="kpi-sub">${produits.length} références · ${stocks.filter(s => s.actuel > 0).length} en stock</div>
         </div>
         <div class="kpi-card red">
