@@ -2,6 +2,8 @@
    MODULE: Achats
    ============================================================ */
 
+const TAUX_USD_CFA = 560;
+
 const Achats = (() => {
   let _achats = [];
   let _lignes = [];
@@ -105,7 +107,7 @@ const Achats = (() => {
       <div class="table-container">
         <table class="lignes-table">
           <thead><tr>
-            <th>Produit</th><th>Qté</th><th>Prix Unit. USD</th><th>Total USD</th><th>Coût Revient/U</th><th>P.Plafond TTC</th><th></th>
+            <th>Produit</th><th>Qté</th><th>Prix Unit. USD</th><th>Total USD</th><th>Coût Revient/U $</th><th>Coût Revient/U CFA</th><th>P.Plafond TTC</th><th></th>
           </tr></thead>
           <tbody id="lignesAchatBody">${lignesRows}</tbody>
         </table>
@@ -138,7 +140,8 @@ const Achats = (() => {
         <td><input type="number" class="form-control al-qte" value="${ligne?.quantite || 1}" min="1" style="width:60px" /></td>
         <td><input type="number" class="form-control al-prix" value="${ligne?.prix_unitaire || ''}" step="0.01" min="0" style="width:90px" placeholder="0.00" /></td>
         <td><input type="number" class="form-control al-total" readonly style="width:90px" /></td>
-        <td><input type="number" class="form-control al-cout" readonly style="width:100px" title="Coût revient unitaire incluant les frais" /></td>
+        <td><input type="number" class="form-control al-cout" readonly style="width:100px" title="Coût revient unitaire en USD" /></td>
+        <td><input type="number" class="form-control al-cout-cfa" readonly style="width:110px" title="Coût revient unitaire en CFA (× 560)" /></td>
         <td><input type="number" class="form-control al-plafond" readonly style="width:100px" title="Prix Plafond TTC = coût × 2 × 1.18" /></td>
         <td><button class="btn btn-icon btn-ghost" onclick="Achats._removeAchatLigne(this)">🗑️</button></td>
       </tr>`;
@@ -158,6 +161,7 @@ const Achats = (() => {
       <td><input type="number" class="form-control al-prix" step="0.01" min="0" style="width:90px" placeholder="0.00" /></td>
       <td><input type="number" class="form-control al-total" readonly style="width:90px" /></td>
       <td><input type="number" class="form-control al-cout" readonly style="width:100px" /></td>
+      <td><input type="number" class="form-control al-cout-cfa" readonly style="width:110px" /></td>
       <td><input type="number" class="form-control al-plafond" readonly style="width:100px" /></td>
       <td><button class="btn btn-icon btn-ghost" onclick="Achats._removeAchatLigne(this)">🗑️</button></td>`;
     body.appendChild(tr);
@@ -183,9 +187,11 @@ const Achats = (() => {
       const fraisAlloues = fraction * autresFrais;
       const coutTotal = total + fraisAlloues;
       const coutUnit = qte > 0 ? coutTotal / qte : 0;
+      const coutUnitCFA = coutUnit * TAUX_USD_CFA;
       const plafond = coutUnit * 2 * 1.18;
       const totEl = row.querySelector('.al-total'); if (totEl) totEl.value = fmtNum(total);
       const coutEl = row.querySelector('.al-cout'); if (coutEl) coutEl.value = fmtNum(coutUnit);
+      const coutCFAEl = row.querySelector('.al-cout-cfa'); if (coutCFAEl) coutCFAEl.value = fmtNum(coutUnitCFA, 0);
       const plafEl = row.querySelector('.al-plafond'); if (plafEl) plafEl.value = fmtNum(plafond);
     }
     const tm = el('aTotalMarch'); if (tm) tm.textContent = fmtUSD(totalMarch);
@@ -210,11 +216,13 @@ const Achats = (() => {
       const fraisAlloues = fraction * autresFrais;
       const coutTotal = totalLigne + fraisAlloues;
       const coutUnit = l.quantite > 0 ? coutTotal / l.quantite : 0;
+      const coutUnitCFA = coutUnit * TAUX_USD_CFA;
       const plafond = coutUnit * 2 * 1.18;
       return {
         produit_id: l.produit_id, quantite: l.quantite,
         prix_unitaire: l.prix_unitaire, total: totalLigne,
         cout_revient_unitaire: coutUnit, cout_revient_total: coutTotal,
+        cout_revient_unitaire_cfa: coutUnitCFA,
         prix_plafond_ttc: plafond,
       };
     });

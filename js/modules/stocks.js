@@ -26,13 +26,15 @@ const Stocks = (() => {
     // Entrées depuis Achats réceptionnés
     for (const a of achats.filter(a => a.statut === 'Reçu')) {
       for (const l of lignesAchats.filter(l => l.achat_id === a.id)) {
+        const puCFA = l.cout_revient_unitaire_cfa
+          || (l.cout_revient_unitaire ? l.cout_revient_unitaire * 560 : l.prix_unitaire * 560);
         computed.push({
           id: `${a.id}_${l.produit_id}`,
           date: a.date,
           produit_id: l.produit_id,
           type: 'Entrée',
           quantite: l.quantite,
-          prix_unitaire: l.cout_revient_unitaire || l.prix_unitaire,
+          prix_unitaire: puCFA,
           reference: a.id,
           commentaire: `Achat ${a.id}`,
         });
