@@ -67,21 +67,22 @@ const Stocks = (() => {
   function computeStocks() {
     const map = {};
     for (const p of _produits) {
-      map[p.id] = { produit: p, entree: 0, sortie: 0, valeur: 0 };
+      map[p.id] = { produit: p, entree: 0, sortie: 0, valeurEntrees: 0 };
     }
     for (const m of _mouvements) {
       if (!map[m.produit_id]) continue;
       if (m.type === 'Entrée') {
-        map[m.produit_id].entree += (m.quantite || 0);
-        map[m.produit_id].valeur += (m.quantite || 0) * (m.prix_unitaire || 0);
+        map[m.produit_id].entree     += (m.quantite || 0);
+        map[m.produit_id].valeurEntrees += (m.quantite || 0) * (m.prix_unitaire || 0);
       } else {
         map[m.produit_id].sortie += (m.quantite || 0);
       }
     }
-    return Object.values(map).map(s => ({
-      ...s,
-      actuel: s.entree - s.sortie,
-    }));
+    return Object.values(map).map(s => {
+      const actuel    = s.entree - s.sortie;
+      const prixMoyen = s.entree > 0 ? s.valeurEntrees / s.entree : 0;
+      return { ...s, actuel, prixMoyen, valeur: actuel > 0 ? actuel * prixMoyen : 0 };
+    });
   }
 
   function getStock(produit_id) {
@@ -168,6 +169,7 @@ const Stocks = (() => {
       { key: 'type', label: 'Type', render: r => statusBadge(r.type), align: 'center' },
       { key: 'quantite', label: 'Qté', align: 'center' },
       { key: 'prix_unitaire', label: 'P.U.', align: 'right', render: r => r.prix_unitaire ? fmtCurrency(r.prix_unitaire) : '—' },
+      { key: 'montant', label: 'Montant', align: 'right', render: r => r.prix_unitaire && r.quantite ? fmtCurrency(r.quantite * r.prix_unitaire) : '—' },
       { key: 'reference', label: 'Référence' },
       { key: 'commentaire', label: 'Commentaire', render: r => `<span class="text-muted">${r.commentaire || ''}</span>` },
       {
