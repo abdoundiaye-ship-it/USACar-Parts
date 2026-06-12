@@ -148,8 +148,8 @@ const Achats = (() => {
   }
 
   let _alIdx = 100;
-  function _addAchatLigne() {
-    const produits = Produits.getActive();
+  async function _addAchatLigne() {
+    const produits = (await DB.getAll('produits')).filter(p => p.actif);
     const body = el('lignesAchatBody');
     if (!body) return;
     const tr = document.createElement('tr');

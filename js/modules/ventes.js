@@ -185,8 +185,8 @@ const Ventes = (() => {
   }
 
   let _ligneIdx = 100;
-  function _addLigne() {
-    const produits = Produits.getActive();
+  async function _addLigne() {
+    const produits = (await DB.getAll('produits')).filter(p => p.actif);
     const body = el('lignesVenteBody');
     if (!body) return;
     const i = _ligneIdx++;
