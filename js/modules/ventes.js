@@ -95,8 +95,12 @@ const Ventes = (() => {
   async function _openVenteForm(vente) {
     const isNew = !vente;
     const clients = await DB.getAll('clients');
-    const produits = (await DB.getAll('produits')).filter(p => p.actif);
+    const allProduits = await DB.getAll('produits');
     const lignes = vente ? _lignes.filter(l => l.vente_id === vente.id) : [];
+    // Garde les produits désactivés déjà présents sur cette vente pour éviter
+    // qu'une ligne existante ne disparaisse silencieusement de la sélection.
+    const lignesProduitIds = new Set(lignes.map(l => l.produit_id));
+    const produits = allProduits.filter(p => p.actif || lignesProduitIds.has(p.id));
 
     const clientOpts = clients.map(c => `<option value="${c.id}" ${vente?.client_id === c.id ? 'selected' : ''}>${c.nom}</option>`).join('');
     const prodOpts = produits.map(p => `<option value="${p.id}">${p.sku} – ${p.nom}</option>`).join('');
@@ -260,6 +264,7 @@ const Ventes = (() => {
     const total_ttc = total_ht + tva;
 
     const allVentes = await DB.getAll('ventes');
+    const oldVente = existingId ? allVentes.find(v => v.id === existingId) : null;
     const vente_id = existingId || seqId('V', allVentes);
 
     // Delete old lignes and mouvements if editing
@@ -289,7 +294,12 @@ const Ventes = (() => {
       statut: paiement === 'Crédit' ? 'Impayée' : 'Payée',
     });
 
-    await Clients.updateTotalAchats(client_id, total_ttc);
+    if (oldVente && oldVente.client_id === client_id) {
+      await Clients.updateTotalAchats(client_id, total_ttc - (oldVente.total_ttc || 0));
+    } else {
+      if (oldVente) await Clients.updateTotalAchats(oldVente.client_id, -(oldVente.total_ttc || 0));
+      await Clients.updateTotalAchats(client_id, total_ttc);
+    }
     await logAction(existingId ? 'Modification' : 'Création', `Vente ${vente_id} – Total: ${fmtCurrency(total_ttc)}`);
     toast(`Vente ${existingId ? 'modifiée' : 'créée'} avec succès`, 'success');
     closeModal();

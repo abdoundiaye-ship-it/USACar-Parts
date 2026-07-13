@@ -97,9 +97,15 @@ document.addEventListener('click', (e) => {
 
 el('modalClose').addEventListener('click', closeModal);
 el('modalCancelBtn').addEventListener('click', closeModal);
-el('modalConfirmBtn').addEventListener('click', () => {
+el('modalConfirmBtn').addEventListener('click', async () => {
   const handler = el('modalConfirmBtn')._handler;
-  if (typeof handler === 'function') handler();
+  if (typeof handler !== 'function') return;
+  try {
+    await handler();
+  } catch (err) {
+    console.error(err);
+    toast(`Erreur lors de l'enregistrement : ${err.message}`, 'error');
+  }
 });
 el('globalModal').addEventListener('click', (e) => {
   if (e.target === el('globalModal')) closeModal();

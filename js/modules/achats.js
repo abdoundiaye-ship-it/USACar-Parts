@@ -70,8 +70,12 @@ const Achats = (() => {
   async function _openForm(achat) {
     const isNew = !achat;
     const fournisseurs = await DB.getAll('fournisseurs');
-    const produits = (await DB.getAll('produits')).filter(p => p.actif);
+    const allProduits = await DB.getAll('produits');
     const lignes = achat ? _lignes.filter(l => l.achat_id === achat.id) : [];
+    // Garde les produits désactivés déjà présents sur cet achat pour éviter
+    // qu'une ligne existante ne disparaisse silencieusement de la sélection.
+    const lignesProduitIds = new Set(lignes.map(l => l.produit_id));
+    const produits = allProduits.filter(p => p.actif || lignesProduitIds.has(p.id));
     const fOpts = fournisseurs.map(f => `<option value="${f.id}" ${achat?.fournisseur_id === f.id ? 'selected' : ''}>${f.nom}</option>`).join('');
 
     let lignesRows = lignes.map((l, i) => _achatLigneTr(i, l, produits)).join('');

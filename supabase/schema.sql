@@ -112,6 +112,7 @@ CREATE TABLE lignes_achats (
   total                 NUMERIC DEFAULT 0,
   cout_revient_unitaire NUMERIC DEFAULT 0,
   cout_revient_total    NUMERIC DEFAULT 0,
+  cout_revient_unitaire_cfa NUMERIC DEFAULT 0,
   prix_plafond_ttc      NUMERIC DEFAULT 0,
   created_at            TIMESTAMPTZ DEFAULT NOW()
 );

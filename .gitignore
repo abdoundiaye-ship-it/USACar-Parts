@@ -10,3 +10,6 @@ desktop.ini
 
 # Logs
 *.log
+
+# Supabase CLI local cache
+supabase/.temp/
