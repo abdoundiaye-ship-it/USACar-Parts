@@ -292,7 +292,7 @@ const Achats = (() => {
       const photo = prodMap[l.produit_id]?.photo_url || ProductPicker.PLACEHOLDER;
       return `
       <tr>
-        <td><img src="${photo}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" onerror="this.src='${ProductPicker.PLACEHOLDER}'"></td>
+        <td><img class="photo-zoomable" src="${photo}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" onerror="this.src='${ProductPicker.PLACEHOLDER}'"></td>
         <td>${prodMap[l.produit_id]?.nom || l.produit_id}</td>
         <td class="text-center">${l.quantite}</td>
         <td class="text-right">${fmtUSD(l.prix_unitaire)}</td>

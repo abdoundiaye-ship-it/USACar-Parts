@@ -24,7 +24,7 @@ const ProductPicker = (() => {
       <div class="pp-option${p.id === selectedId ? ' is-selected' : ''}"
            data-id="${p.id}" data-label="${label}" data-thumb="${thumb}" data-search="${search}"
            onclick="ProductPicker.select(this)">
-        <img src="${thumb}" alt="" onerror="this.src='${PLACEHOLDER}'">
+        <img class="photo-zoomable" src="${thumb}" alt="" onerror="this.src='${PLACEHOLDER}'">
         <span>${label}</span>
       </div>`;
   }
@@ -39,7 +39,7 @@ const ProductPicker = (() => {
       <div class="prod-picker">
         <input type="hidden" class="${fieldClass}" value="${selectedId || ''}">
         <button type="button" class="prod-picker-trigger" onclick="ProductPicker.toggle(this)">
-          <img class="prod-picker-thumb" src="${thumb}" alt="" onerror="this.src='${PLACEHOLDER}'">
+          <img class="prod-picker-thumb photo-zoomable" src="${thumb}" alt="" onerror="this.src='${PLACEHOLDER}'">
           <span class="prod-picker-label">${label}</span>
           <span class="prod-picker-caret">▾</span>
         </button>
