@@ -21,6 +21,14 @@ const PAGES = {
 };
 
 /* ── Navigation (with auth guard) ── */
+/* Chaque appel a un numéro de séquence : si une navigation plus récente a
+   démarré pendant qu'on attendait cfg.render() (ex. Dashboard très lent
+   ravitaillé après coup), on ne doit ni appliquer enforcePermissions sur la
+   mauvaise page, ni laisser l'utilisateur bloqué sur un contenu périmé qui
+   vient d'écraser mainContent — on relance un rendu de la page réellement
+   affichée par le hash courant. */
+let _navSeq = 0;
+
 async function navigate(hash) {
   if (!Auth.isLoggedIn()) { Auth.showLoginScreen(); return; }
 
@@ -52,10 +60,14 @@ async function navigate(hash) {
   const content = el('mainContent');
   content.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
 
+  const mySeq = ++_navSeq;
+
   try {
     await cfg.render(content);
+    if (mySeq !== _navSeq) return _recoverFromStaleRender(mySeq);
     Auth.enforcePermissions(page, content);
   } catch (err) {
+    if (mySeq !== _navSeq) return _recoverFromStaleRender(mySeq);
     console.error('Page render error:', err);
     content.innerHTML = `<div class="empty-state">
       <div class="empty-icon">❌</div>
@@ -64,6 +76,14 @@ async function navigate(hash) {
   }
 
   if (window.innerWidth <= 900) el('sidebar').classList.remove('open');
+}
+
+/* Un rendu périmé vient de terminer (et donc d'écraser mainContent avec du
+   contenu obsolète) : on relance la navigation courante pour réafficher la
+   bonne page. Si une navigation plus récente est encore elle-même en vol,
+   son propre _recoverFromStaleRender/rendu final se chargera de la suite. */
+function _recoverFromStaleRender(mySeq) {
+  if (mySeq !== _navSeq) navigate(window.location.hash);
 }
 
 /* ── Show/hide nav items based on profile ── */

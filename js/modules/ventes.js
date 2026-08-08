@@ -103,7 +103,6 @@ const Ventes = (() => {
     const produits = allProduits.filter(p => p.actif || lignesProduitIds.has(p.id));
 
     const clientOpts = clients.map(c => `<option value="${c.id}" ${vente?.client_id === c.id ? 'selected' : ''}>${c.nom}</option>`).join('');
-    const prodOpts = produits.map(p => `<option value="${p.id}">${p.sku} – ${p.nom}</option>`).join('');
 
     let lignesRows = lignes.map((l, i) => _ligneTr(i, l, produits)).join('');
     if (!lignesRows) lignesRows = _ligneTr(0, null, produits);
@@ -171,14 +170,9 @@ const Ventes = (() => {
   }
 
   function _ligneTr(i, ligne, produits) {
-    const prodOpts = produits.map(p =>
-      `<option value="${p.id}" ${ligne?.produit_id === p.id ? 'selected' : ''}>${p.sku} – ${p.nom}</option>`
-    ).join('');
     return `
       <tr class="ligne-row" data-idx="${i}">
-        <td><select class="form-control lv-produit" onchange="Ventes._recalc()">
-          <option value="">--</option>${prodOpts}
-        </select></td>
+        <td>${ProductPicker.render('lv-produit', produits, ligne?.produit_id || '')}</td>
         <td><input type="number" class="form-control lv-qte" value="${ligne?.quantite || 1}" min="1" style="width:60px" onchange="Ventes._recalc()" /></td>
         <td><input type="number" class="form-control lv-prix" value="${ligne?.prix_base_ht || ''}" step="0.01" min="0" style="width:100px" placeholder="Prix" onchange="Ventes._recalc()" /></td>
         <td><input type="number" class="form-control lv-remise" value="${ligne?.remise || 0}" min="0" max="100" style="width:60px" onchange="Ventes._recalc()" /></td>
@@ -197,9 +191,8 @@ const Ventes = (() => {
     const tr = document.createElement('tr');
     tr.className = 'ligne-row';
     tr.dataset.idx = i;
-    const prodOpts = produits.map(p => `<option value="${p.id}">${p.sku} – ${p.nom}</option>`).join('');
     tr.innerHTML = `
-      <td><select class="form-control lv-produit" onchange="Ventes._recalc()"><option value="">--</option>${prodOpts}</select></td>
+      <td>${ProductPicker.render('lv-produit', produits, '')}</td>
       <td><input type="number" class="form-control lv-qte" value="1" min="1" style="width:60px" onchange="Ventes._recalc()" /></td>
       <td><input type="number" class="form-control lv-prix" step="0.01" min="0" style="width:100px" placeholder="Prix" onchange="Ventes._recalc()" /></td>
       <td><input type="number" class="form-control lv-remise" value="0" min="0" max="100" style="width:60px" onchange="Ventes._recalc()" /></td>

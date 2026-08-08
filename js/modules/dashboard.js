@@ -28,7 +28,7 @@ const Dashboard = (() => {
     const totalValeurStock = stocks.reduce((s, x) => s + (x.actuel > 0 ? x.valeur : 0), 0);
     const totalCA_TTC = ventes.reduce((s, v) => s + (v.total_ttc || 0), 0);
     const totalCA_HT = ventes.reduce((s, v) => s + (v.total_ht || 0), 0);
-    const totalAchatsCoût = achats.reduce((s, a) => s + (a.total || 0) + (a.autres_frais || 0), 0);
+    const totalAchatsCoût = achats.reduce((s, a) => s + (a.total || 0) + (a.autres_frais || 0), 0) * TAUX_USD_CFA;
     const margeNette = totalCA_HT - totalAchatsCoût;
     const facturesImpayees = factures.filter(f => f.statut === 'Impayée').reduce((s, f) => s + (f.total_ttc || 0), 0);
     const ventesAujourdhui = ventes.filter(v => v.date === todayStr()).reduce((s, v) => s + (v.total_ttc || 0), 0);

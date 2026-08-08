@@ -135,12 +135,9 @@ const Achats = (() => {
   }
 
   function _achatLigneTr(i, ligne, produits) {
-    const prodOpts = produits.map(p =>
-      `<option value="${p.id}" ${ligne?.produit_id === p.id ? 'selected' : ''}>${p.sku} – ${p.nom}</option>`
-    ).join('');
     return `
       <tr class="al-row">
-        <td><select class="form-control al-produit" onchange="Achats._recalcAchat()"><option value="">--</option>${prodOpts}</select></td>
+        <td>${ProductPicker.render('al-produit', produits, ligne?.produit_id || '')}</td>
         <td><input type="number" class="form-control al-qte" value="${ligne?.quantite || 1}" min="1" style="width:60px" /></td>
         <td><input type="number" class="form-control al-prix" value="${ligne?.prix_unitaire || ''}" step="0.01" min="0" style="width:90px" placeholder="0.00" /></td>
         <td><input type="number" class="form-control al-total" readonly style="width:90px" /></td>
@@ -158,9 +155,8 @@ const Achats = (() => {
     if (!body) return;
     const tr = document.createElement('tr');
     tr.className = 'al-row';
-    const prodOpts = produits.map(p => `<option value="${p.id}">${p.sku} – ${p.nom}</option>`).join('');
     tr.innerHTML = `
-      <td><select class="form-control al-produit" onchange="Achats._recalcAchat()"><option value="">--</option>${prodOpts}</select></td>
+      <td>${ProductPicker.render('al-produit', produits, '')}</td>
       <td><input type="number" class="form-control al-qte" value="1" min="1" style="width:60px" /></td>
       <td><input type="number" class="form-control al-prix" step="0.01" min="0" style="width:90px" placeholder="0.00" /></td>
       <td><input type="number" class="form-control al-total" readonly style="width:90px" /></td>
@@ -292,15 +288,19 @@ const Achats = (() => {
     const prodMap = Object.fromEntries(produits.map(p => [p.id, p]));
     const lignes = _lignes.filter(l => l.achat_id === id);
 
-    const lignesHtml = lignes.map(l => `
+    const lignesHtml = lignes.map(l => {
+      const photo = prodMap[l.produit_id]?.photo_url || ProductPicker.PLACEHOLDER;
+      return `
       <tr>
+        <td><img src="${photo}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" onerror="this.src='${ProductPicker.PLACEHOLDER}'"></td>
         <td>${prodMap[l.produit_id]?.nom || l.produit_id}</td>
         <td class="text-center">${l.quantite}</td>
         <td class="text-right">${fmtUSD(l.prix_unitaire)}</td>
         <td class="text-right">${fmtUSD(l.total)}</td>
         <td class="text-right font-bold">${fmtUSD(l.cout_revient_unitaire)}</td>
         <td class="text-right">${fmtUSD(l.prix_plafond_ttc)}</td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
 
     openModal(`Détails Achat ${id}`, `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
@@ -311,7 +311,7 @@ const Achats = (() => {
       </div>
       <div class="table-container">
         <table>
-          <thead><tr><th>Produit</th><th>Qté</th><th>P.U.</th><th>Total</th><th>Coût Revient/U</th><th>Prix Plafond TTC</th></tr></thead>
+          <thead><tr><th>Photo</th><th>Produit</th><th>Qté</th><th>P.U.</th><th>Total</th><th>Coût Revient/U</th><th>Prix Plafond TTC</th></tr></thead>
           <tbody>${lignesHtml}</tbody>
         </table>
       </div>
