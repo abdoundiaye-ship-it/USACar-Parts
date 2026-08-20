@@ -14,13 +14,14 @@ const Dashboard = (() => {
     _destroyCharts();
     await Stocks.load();
 
-    const [ventes, lignesVentes, factures, produits, mouvements, achats, paiements] = await Promise.all([
+    const [ventes, lignesVentes, factures, produits, mouvements, achats, lignesAchats, paiements] = await Promise.all([
       DB.getAll('ventes'),
       DB.getAll('lignes_ventes'),
       DB.getAll('factures'),
       DB.getAll('produits'),
       DB.getAll('mouvements'),
       DB.getAll('achats'),
+      DB.getAll('lignes_achats'),
       DB.getAll('paiements'),
     ]);
 
@@ -28,8 +29,25 @@ const Dashboard = (() => {
     const totalValeurStock = stocks.reduce((s, x) => s + (x.actuel > 0 ? x.valeur : 0), 0);
     const totalCA_TTC = ventes.reduce((s, v) => s + (v.total_ttc || 0), 0);
     const totalCA_HT = ventes.reduce((s, v) => s + (v.total_ht || 0), 0);
-    const totalAchatsCoût = achats.reduce((s, a) => s + (a.total || 0) + (a.autres_frais || 0), 0) * TAUX_USD_CFA;
-    const margeNette = totalCA_HT - totalAchatsCoût;
+
+    // Coût de revient unitaire (CFA) le plus récent par produit, à partir des lignes d'achats
+    const achatDateMap = Object.fromEntries(achats.map(a => [a.id, a.date]));
+    const coutUnitCFA = {};
+    const coutUnitDate = {};
+    for (const la of lignesAchats) {
+      if (!la.produit_id) continue;
+      const puCFA = la.cout_revient_unitaire_cfa
+        || (la.cout_revient_unitaire ? la.cout_revient_unitaire * TAUX_USD_CFA : (la.prix_unitaire ? la.prix_unitaire * TAUX_USD_CFA : 0));
+      if (!puCFA) continue;
+      const d = achatDateMap[la.achat_id] || '';
+      if (!coutUnitDate[la.produit_id] || d >= coutUnitDate[la.produit_id]) {
+        coutUnitCFA[la.produit_id] = puCFA;
+        coutUnitDate[la.produit_id] = d;
+      }
+    }
+    // Marge Nette Brute = CA HT des ventes − coût de revient des produits effectivement vendus (COGS)
+    const totalCOGS = lignesVentes.reduce((s, l) => s + (coutUnitCFA[l.produit_id] || 0) * (l.quantite || 0), 0);
+    const margeNette = totalCA_HT - totalCOGS;
     const facturesImpayees = factures.filter(f => f.statut === 'Impayée').reduce((s, f) => s + (f.total_ttc || 0), 0);
     const ventesAujourdhui = ventes.filter(v => v.date === todayStr()).reduce((s, v) => s + (v.total_ttc || 0), 0);
     const nbClients = (await DB.getAll('clients')).length;

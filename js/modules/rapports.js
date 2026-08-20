@@ -385,7 +385,9 @@ const Rapports = (() => {
     // Latest coût revient per produit from lignes_achats
     const coutMap = {};
     for (const la of lignesAchats) {
-      if (la.cout_revient_unitaire) coutMap[la.produit_id] = _num(la.cout_revient_unitaire);
+      const puCFA = la.cout_revient_unitaire_cfa
+        || (la.cout_revient_unitaire ? _num(la.cout_revient_unitaire) * TAUX_USD_CFA : 0);
+      if (puCFA) coutMap[la.produit_id] = puCFA;
     }
 
     // Aggregate lignes_ventes filtered by date + category
