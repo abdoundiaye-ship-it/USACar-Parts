@@ -116,6 +116,30 @@ html, body {
   font-weight: 600;
 }
 
+.sidebar-copyright {
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  text-align: center;
+}
+
+.sidebar-copyright img {
+  display: block;
+  width: 100%;
+  max-width: 180px;
+  margin: 0 auto 8px;
+  padding: 6px 8px;
+  background: #fff;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.sidebar-copyright span {
+  display: block;
+  font-size: 10px;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.45);
+}
+
 .nav-icon { font-size: 16px; flex-shrink: 0; }
 .nav-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -825,6 +849,21 @@ select.form-control { cursor: pointer; }
   color: var(--text-light);
   background: var(--surface2);
   border-top: 1px solid var(--border);
+}
+
+.login-copyright {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.login-copyright img {
+  height: 40px;
+  width: auto;
 }
 
 /* ── Topbar user badge ── */

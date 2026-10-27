@@ -189,6 +189,10 @@ const Auth = (() => {
         </div>
         <div class="login-footer">
           © 2026 USA PARTS AUTO · Système ERP
+          <div class="login-copyright">
+            <img src="assets/global-advisory-logo.png" alt="Global Advisory" />
+            <span>© 2026 Global Advisory - Conseil &amp; Commerce International</span>
+          </div>
         </div>
       </div>`;
     overlay.style.display = 'flex';
