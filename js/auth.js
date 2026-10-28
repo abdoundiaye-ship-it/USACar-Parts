@@ -164,7 +164,7 @@ const Auth = (() => {
     overlay.innerHTML = `
       <div class="login-card">
         <div class="login-logo">
-          <img src="assets/logo.png" alt="Logo" />
+          <img src="assets/logo-sidebar.png?v=20261028" alt="Logo" />
           <div class="login-brand">USA PARTS AUTO</div>
           <div class="login-sub">ERP Pro — Pièces Détachées Automobiles</div>
         </div>
