@@ -55,9 +55,17 @@ class Database {
   /* ── READ ALL ── */
   async getAll(store) {
     this._check();
-    const { data, error } = await this.client.from(store).select('*');
-    if (error) throw new Error(`getAll(${store}): ${error.message}`);
-    return data || [];
+    /* Supabase plafonne chaque requête à 1000 lignes : on pagine pour ne rien perdre */
+    const PAGE = 1000;
+    const rows = [];
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await this.client
+        .from(store).select('*').order(_pk(store)).range(from, from + PAGE - 1);
+      if (error) throw new Error(`getAll(${store}): ${error.message}`);
+      rows.push(...(data || []));
+      if (!data || data.length < PAGE) break;
+    }
+    return rows;
   }
 
   /* ── READ ONE ── */

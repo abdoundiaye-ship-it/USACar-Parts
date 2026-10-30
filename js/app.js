@@ -118,13 +118,19 @@ document.addEventListener('click', (e) => {
 el('modalClose').addEventListener('click', closeModal);
 el('modalCancelBtn').addEventListener('click', closeModal);
 el('modalConfirmBtn').addEventListener('click', async () => {
-  const handler = el('modalConfirmBtn')._handler;
+  const btn = el('modalConfirmBtn');
+  const handler = btn._handler;
   if (typeof handler !== 'function') return;
+  /* Bloque le double-clic : sinon la même vente/achat est enregistrée deux fois */
+  if (btn.disabled) return;
+  btn.disabled = true;
   try {
     await handler();
   } catch (err) {
     console.error(err);
     toast(`Erreur lors de l'enregistrement : ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
   }
 });
 el('globalModal').addEventListener('click', (e) => {

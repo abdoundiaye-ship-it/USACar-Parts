@@ -161,6 +161,9 @@ function calcTTC(ht) { return ht * (1 + TVA_RATE); }
 function calcHT(ttc) { return ttc / (1 + TVA_RATE); }
 function applyRemise(prix, remise) { return prix * (1 - (remise || 0) / 100); }
 
+/* Une vente annulée ne compte ni dans le CA, ni dans les marges, ni dans les totaux clients */
+function venteComptee(v) { return v && v.statut !== 'Annulée'; }
+
 /* ---- Logging ---- */
 async function logAction(action, description, utilisateur = 'Système') {
   try {

@@ -14,7 +14,7 @@ const Dashboard = (() => {
     _destroyCharts();
     await Stocks.load();
 
-    const [ventes, lignesVentes, factures, produits, mouvements, achats, lignesAchats, paiements] = await Promise.all([
+    const [toutesVentes, toutesLignesVentes, factures, produits, mouvements, achats, lignesAchats, paiements] = await Promise.all([
       DB.getAll('ventes'),
       DB.getAll('lignes_ventes'),
       DB.getAll('factures'),
@@ -24,6 +24,11 @@ const Dashboard = (() => {
       DB.getAll('lignes_achats'),
       DB.getAll('paiements'),
     ]);
+
+    // Même périmètre pour tous les indicateurs : ventes non annulées et leurs lignes
+    const ventes = toutesVentes.filter(venteComptee);
+    const venteIds = new Set(ventes.map(v => v.id));
+    const lignesVentes = toutesLignesVentes.filter(l => venteIds.has(l.vente_id));
 
     const stocks = Stocks.computeStocks ? Stocks.computeStocks() : [];
     const totalValeurStock = stocks.reduce((s, x) => s + (x.actuel > 0 ? x.valeur : 0), 0);
@@ -135,7 +140,7 @@ const Dashboard = (() => {
           <div class="kpi-icon">🛒</div>
           <div class="kpi-label">Total Ventes</div>
           <div class="kpi-value">${ventes.length}</div>
-          <div class="kpi-sub">${ventes.filter(v => v.statut === 'Livrée').length} livrée(s)</div>
+          <div class="kpi-sub">${ventes.filter(v => v.statut === 'Livrée').length} livrée(s)${toutesVentes.length > ventes.length ? ` · ${toutesVentes.length - ventes.length} annulée(s) exclue(s)` : ''}</div>
         </div>
         <div class="kpi-card green">
           <div class="kpi-icon">👥</div>
@@ -192,7 +197,7 @@ const Dashboard = (() => {
             <div class="card-title">Dernières Ventes</div>
             <a href="#ventes" class="btn btn-ghost btn-sm">Voir tout →</a>
           </div>
-          ${_recentVentes(ventes)}
+          ${_recentVentes(toutesVentes)}
         </div>
         <div class="card">
           <div class="card-header">

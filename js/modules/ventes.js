@@ -49,7 +49,7 @@ const Ventes = (() => {
       },
     ], filtered, 'Aucune vente enregistrée');
 
-    const totalCA = filtered.reduce((s, v) => s + (v.total_ttc || 0), 0);
+    const totalCA = filtered.filter(venteComptee).reduce((s, v) => s + (v.total_ttc || 0), 0);
 
     container.innerHTML = `
       <div class="page-header">
@@ -262,7 +262,8 @@ const Ventes = (() => {
 
     // Delete old lignes and mouvements if editing
     if (existingId) {
-      const oldLignes = _lignes.filter(l => l.vente_id === existingId);
+      // Relire depuis la base (et non le cache) pour ne laisser aucune ancienne ligne derrière
+      const oldLignes = await DB.getByIndex('lignes_ventes', 'vente_id', existingId);
       for (const l of oldLignes) await DB.delete('lignes_ventes', l.id);
       const allMvs = await DB.getAll('mouvements');
       for (const m of allMvs.filter(m => m.reference === existingId)) await DB.delete('mouvements', m.id);
@@ -287,12 +288,8 @@ const Ventes = (() => {
       statut: paiement === 'Crédit' ? 'Impayée' : 'Payée',
     });
 
-    if (oldVente && oldVente.client_id === client_id) {
-      await Clients.updateTotalAchats(client_id, total_ttc - (oldVente.total_ttc || 0));
-    } else {
-      if (oldVente) await Clients.updateTotalAchats(oldVente.client_id, -(oldVente.total_ttc || 0));
-      await Clients.updateTotalAchats(client_id, total_ttc);
-    }
+    await Clients.syncTotalAchats(client_id);
+    if (oldVente && oldVente.client_id !== client_id) await Clients.syncTotalAchats(oldVente.client_id);
     await logAction(existingId ? 'Modification' : 'Création', `Vente ${vente_id} – Total: ${fmtCurrency(total_ttc)}`);
     toast(`Vente ${existingId ? 'modifiée' : 'créée'} avec succès`, 'success');
     closeModal();
@@ -345,12 +342,16 @@ const Ventes = (() => {
 
   async function deleteVente(id) {
     confirmDialog(`Supprimer la vente <b>${id}</b> et toutes ses lignes ?`, async () => {
-      const toDelete = _lignes.filter(l => l.vente_id === id);
+      const vente = _ventes.find(v => v.id === id);
+      const toDelete = await DB.getByIndex('lignes_ventes', 'vente_id', id);
       for (const l of toDelete) await DB.delete('lignes_ventes', l.id);
+      const mvs = await DB.getByIndex('mouvements', 'reference', id);
+      for (const m of mvs) await DB.delete('mouvements', m.id);
       await DB.delete('ventes', id);
       const allF = await DB.getAll('factures');
       const f = allF.find(x => x.vente_id === id);
       if (f) await DB.delete('factures', f.id);
+      if (vente) await Clients.syncTotalAchats(vente.client_id);
       await logAction('Suppression', `Vente ${id}`);
       toast('Vente supprimée', 'warning');
       closeModal();

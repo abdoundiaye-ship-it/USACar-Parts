@@ -130,10 +130,14 @@ const Clients = (() => {
     });
   }
 
-  async function updateTotalAchats(clientId, montant) {
+  /* Recalcule le total à partir des ventes (au lieu d'un compteur incrémental
+     qui dérivait lors des suppressions de ventes) */
+  async function syncTotalAchats(clientId) {
     const c = await DB.get('clients', clientId);
     if (!c) return;
-    await DB.put('clients', { ...c, total_achats: (c.total_achats || 0) + montant });
+    const ventes = await DB.getByIndex('ventes', 'client_id', clientId);
+    const total_achats = ventes.filter(venteComptee).reduce((s, v) => s + (v.total_ttc || 0), 0);
+    await DB.put('clients', { ...c, total_achats });
     _all = await DB.getAll('clients');
   }
 
@@ -146,5 +150,5 @@ const Clients = (() => {
     ], _all);
   }
 
-  return { render, load, getAll, getById, createForm, editForm, deleteItem, updateTotalAchats, exportData, _onSearch };
+  return { render, load, getAll, getById, createForm, editForm, deleteItem, syncTotalAchats, exportData, _onSearch };
 })();

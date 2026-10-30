@@ -147,10 +147,11 @@ const Rapports = (() => {
 
     filteredV.sort((a, b) => b.date.localeCompare(a.date));
 
-    const totalHT  = filteredV.reduce((s, v) => s + _num(v.total_ht), 0);
-    const totalTTC = filteredV.reduce((s, v) => s + _num(v.total_ttc), 0);
-    const totalTVA = filteredV.reduce((s, v) => s + _num(v.tva), 0);
-    const ticket   = filteredV.length ? totalTTC / filteredV.length : 0;
+    const comptees = filteredV.filter(venteComptee);
+    const totalHT  = comptees.reduce((s, v) => s + _num(v.total_ht), 0);
+    const totalTTC = comptees.reduce((s, v) => s + _num(v.total_ttc), 0);
+    const totalTVA = comptees.reduce((s, v) => s + _num(v.tva), 0);
+    const ticket   = comptees.length ? totalTTC / comptees.length : 0;
 
     const rows = filteredV.map(v => {
       const client  = clientMap[v.client_id];
@@ -373,21 +374,29 @@ const Rapports = (() => {
      TAB 4 — MARGES (par produit)
   ═══════════════════════════════════════════════════════════ */
   async function _renderMarges(container) {
-    const [lignesVentes, lignesAchats, produits, ventes] = await Promise.all([
+    const [lignesVentes, lignesAchats, produits, ventes, achats] = await Promise.all([
       DB.getAll('lignes_ventes'), DB.getAll('lignes_achats'),
       DB.getAll('produits'),     DB.getAll('ventes'),
+      DB.getAll('achats'),
     ]);
     const prodMap  = Object.fromEntries(produits.map(p => [p.id, p]));
-    const venteMap = Object.fromEntries(ventes.map(v => [v.id, v]));
+    const venteMap = Object.fromEntries(ventes.filter(venteComptee).map(v => [v.id, v]));
     const f = _f.marges;
     const catOpts = [...new Set(produits.map(p => p.categorie).filter(Boolean))].sort().map(c => ({ v: c, l: c }));
 
-    // Latest coût revient per produit from lignes_achats
+    // Coût de revient le plus récent (par date d'achat) par produit — même règle que le Tableau de Bord
+    const achatDateMap = Object.fromEntries(achats.map(a => [a.id, a.date]));
     const coutMap = {};
+    const coutDate = {};
     for (const la of lignesAchats) {
       const puCFA = la.cout_revient_unitaire_cfa
-        || (la.cout_revient_unitaire ? _num(la.cout_revient_unitaire) * TAUX_USD_CFA : 0);
-      if (puCFA) coutMap[la.produit_id] = puCFA;
+        || (la.cout_revient_unitaire ? _num(la.cout_revient_unitaire) * TAUX_USD_CFA : (la.prix_unitaire ? _num(la.prix_unitaire) * TAUX_USD_CFA : 0));
+      if (!puCFA) continue;
+      const d = achatDateMap[la.achat_id] || '';
+      if (coutDate[la.produit_id] == null || d >= coutDate[la.produit_id]) {
+        coutMap[la.produit_id] = puCFA;
+        coutDate[la.produit_id] = d;
+      }
     }
 
     // Aggregate lignes_ventes filtered by date + category
@@ -492,9 +501,10 @@ const Rapports = (() => {
     const clientOpts = clients.map(c => ({ v: c.id, l: c.nom }));
 
     const filtered = clients.filter(c => !f.clientId || c.id === f.clientId);
+    let totalCA = 0;
 
     const rows = filtered.map(c => {
-      const clientVentes   = ventes.filter(v => v.client_id === c.id);
+      const clientVentes   = ventes.filter(v => v.client_id === c.id && venteComptee(v));
       const clientFactures = factures.filter(fac => fac.client_id === c.id);
       const nbVentes       = clientVentes.length;
       const caHT           = clientVentes.reduce((s, v) => s + _num(v.total_ht), 0);
@@ -503,6 +513,7 @@ const Rapports = (() => {
       const montantImapye  = clientFactures.filter(fac => fac.statut === 'Impayée').reduce((s, fac) => s + _num(fac.total_ttc), 0);
       const credit         = _num(c.credit);
       const lastVente      = clientVentes.sort((a, b) => b.date.localeCompare(a.date))[0];
+      totalCA += caTTC;
 
       return `<tr>
         <td class="font-bold" style="color:var(--primary)">${c.id}</td>
@@ -518,7 +529,6 @@ const Rapports = (() => {
       </tr>`;
     }).join('') || `<tr><td colspan="10" class="text-center text-muted" style="padding:24px">Aucun client</td></tr>`;
 
-    const totalCA      = filtered.reduce((s, c) => s + _num(c.total_achats), 0);
     const totalCredit  = filtered.reduce((s, c) => s + _num(c.credit), 0);
     const nbActifs     = filtered.filter(c => ventes.some(v => v.client_id === c.id)).length;
 
